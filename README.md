@@ -50,34 +50,34 @@ El objetivo principal es ofrecer una interfaz de usuario altamente pulida, rápi
 
 ### Frontend (Interfaz de Usuario)
 
-- **Core:** Next.js 16, React 19, HTML5
-- **Estilos:** Tailwind CSS v4
-- **Otras librerías:** Lucide React (Iconos)
+- **Core:** Next.js 16, React 19, HTML5.
+- **Estilos:** Tailwind CSS v4.
+- **Otras librerías:** Lucide React (Iconos).
 
 ### Backend & Base de Datos
 
-- **Lógica del Servidor:** Next.js (Server Actions)
-- **Base de Datos:** PostgreSQL (Vercel Postgres)
+- **Lógica del Servidor:** Next.js (Server Actions).
+- **Base de Datos:** PostgreSQL (Vercel Postgres).
 
 ---
 
 ## 🎨 Estilo y Diseño
 
-El diseño está fuertemente inspirado en interfaces minimalistas modernas, enfocado a desarrolladores y entusiastas del hardware. Destaca un *dark mode* nativo por defecto que reduce la fatiga visual, bordes sutiles y un esquema de colores monocromático acentuado por un color de marca vibrante (púrpura) para resaltar las interacciones principales y el estado de focus.
+El diseño está fuertemente inspirado en interfaces minimalistas modernas, enfocado a desarrolladores y entusiastas del hardware. Destaca un _dark mode_ nativo por defecto que reduce la fatiga visual, bordes sutiles y un esquema de colores monocromático acentuado por un color de marca vibrante (púrpura) para resaltar las interacciones principales y el estado de focus.
 
 ### Paleta de Colores
 
-| Color             | Hexadecimal | Uso principal                                  |
-| :---------------- | :---------- | :--------------------------------------------- |
-| **Primario**      | `#9D00FF`   | Acentos principales, estados activos y focus   |
-| **Fondo Base**    | `#0a0a0a`   | Fondo principal de la aplicación (Dark Mode)   |
-| **Superficie**    | `#0b0b0b`   | Tarjetas, modales y paneles elevados           |
-| **Texto Base**    | `#ededed`   | Texto principal de párrafos y títulos          |
+| Color          | Hexadecimal | Uso principal                                 |
+| :------------- | :---------- | :-------------------------------------------- |
+| **Primario**   | `#9D00FF`   | Acentos principales, estados activos y focus. |
+| **Fondo Base** | `#0a0a0a`   | Fondo principal de la aplicación (Dark Mode). |
+| **Superficie** | `#0b0b0b`   | Tarjetas, modales y paneles elevados.         |
+| **Texto Base** | `#ededed`   | Texto principal de párrafos y títulos.        |
 
 ### Tipografía
 
-- **Títulos:** Geist Sans
-- **Cuerpo de texto:** Geist Sans / Arial
+- **Títulos:** Geist Sans.
+- **Cuerpo de texto:** Geist Sans / Arial.
 
 ---
 
@@ -85,14 +85,14 @@ El diseño está fuertemente inspirado en interfaces minimalistas modernas, enfo
 
 ```text
 📂 misetup
- ┣ 📂 public          # Archivos estáticos
- ┣ 📂 src             # Código fuente principal
- ┃ ┣ 📂 app           # Rutas y layouts principales de Next.js
- ┃ ┣ 📂 components    # Componentes reutilizables UI (Dashboard, Layout, etc)
- ┃ ┗ 📂 lib           # Server actions, conexión a base de datos y utilidades
- ┣ 📜 sections_schema.sql # Esquema de la base de datos PostgreSQL
- ┣ 📜 globals.css     # Estilos globales y paleta de colores inline
- ┗ 📜 package.json    # Configuración de dependencias y scripts
+ ┣ 📂 public          # Archivos estáticos.
+ ┣ 📂 src             # Código fuente principal.
+ ┃ ┣ 📂 app           # Rutas y layouts principales de Next.js.
+ ┃ ┣ 📂 components    # Componentes reutilizables UI (Dashboard, Layout, etc).
+ ┃ ┗ 📂 lib           # Server actions, conexión a base de datos y utilidades.
+ ┣ 📜 sections_schema.sql # Esquema de la base de datos PostgreSQL.
+ ┣ 📜 globals.css     # Estilos globales y paleta de colores inline.
+ ┗ 📜 package.json    # Configuración de dependencias y scripts.
 ```
 
 ---
@@ -101,9 +101,9 @@ El diseño está fuertemente inspirado en interfaces minimalistas modernas, enfo
 
 Para ejecutar este proyecto de forma local, necesitarás tener instalado:
 
-- Node.js (v18 o superior)
-- npm o pnpm
-- Una base de datos PostgreSQL (o las variables de entorno de Vercel Postgres)
+- Node.js (v18 o superior).
+- npm o pnpm.
+- Una base de datos PostgreSQL (o las variables de entorno de Vercel Postgres).
 
 1. Clona el repositorio:
    ```bash
@@ -120,12 +120,12 @@ Para ejecutar este proyecto de forma local, necesitarás tener instalado:
 
 ## 📦 Scripts y Comandos
 
-| Comando          | Descripción                                     |
-| :--------------- | :---------------------------------------------- |
-| `npm run dev`    | Inicia el servidor de desarrollo en localhost   |
-| `npm run build`  | Construye la aplicación optimizada para prod    |
-| `npm run start`  | Inicia el servidor en modo producción           |
-| `npm run lint`   | Ejecuta ESLint para analizar el código          |
+| Comando         | Descripción                                    |
+| :-------------- | :--------------------------------------------- |
+| `npm run dev`   | Inicia el servidor de desarrollo en localhost. |
+| `npm run build` | Construye la aplicación optimizada para prod.  |
+| `npm run start` | Inicia el servidor en modo producción.         |
+| `npm run lint`  | Ejecuta ESLint para analizar el código.        |
 
 ---
 
@@ -148,4 +148,3 @@ Si tienes alguna pregunta o deseas colaborar en algún proyecto, no dudes en pon
 - **LinkedIn:** [linkedin.com/in/melitacruces](https://linkedin.com/in/melitacruces)
 - **GitHub:** [github.com/melitacruces](https://github.com/melitacruces)
 - **Ubicación:** Concepción, Chile
-
