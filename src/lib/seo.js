@@ -2,7 +2,7 @@ const siteUrl = (process.env.NEXT_PUBLIC_SITE_URL || 'https://misetup.melitacruc
 
 export const siteConfig = {
   name: 'MiSetup',
-  title: 'MiSetup | Dashboard Interactivo',
+  title: 'MiSetup - Dashboard Interactivo',
   description:
     'Dashboard interactivo para organizar hardware, software y herramientas digitales de un setup personal o profesional.',
   url: siteUrl,
