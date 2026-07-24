@@ -46,7 +46,7 @@ export default function OpenGraphImage() {
               fontWeight: 800,
             }}
           >
-            M
+            m
           </div>
           <div
             style={{
@@ -92,7 +92,7 @@ export default function OpenGraphImage() {
               lineHeight: 1.12,
             }}
           >
-            Organiza tu hardware, software y herramientas digitales.
+            organiza tu hardware, software y herramientas digitales.
           </div>
           <div
             style={{

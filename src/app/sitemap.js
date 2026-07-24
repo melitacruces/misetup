@@ -11,7 +11,7 @@ export default function sitemap() {
       priority: 1,
     },
     {
-      url: `${siteConfig.url}/demo`,
+      url: `${siteConfig.url}/preview`,
       lastModified,
       changeFrequency: 'monthly',
       priority: 0.8,

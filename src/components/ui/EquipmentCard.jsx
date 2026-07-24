@@ -1,172 +1,229 @@
-import React from 'react';
-import { Trash2, X, Check, Loader2 } from 'lucide-react';
+import { useState } from 'react';
+import {
+  CalendarClock,
+  EyeOff,
+  FileText,
+  ImageOff,
+  Tag,
+} from 'lucide-react';
+import {
+  formatMoney,
+  isSafeExternalUrl,
+  normalizeEquipmentItem,
+} from '@/lib/setupData';
+
+const STATUS_STYLES = {
+  active: 'border-emerald-500/30 bg-emerald-500/10 text-emerald-400',
+  wishlist: 'border-brand/40 bg-brand/10 text-brand',
+};
+
+const STATUS_LABELS = {
+  active: 'activo',
+  wishlist: 'wishlist',
+};
+
+const CARD_RENDER_DATE = Date.now();
+const WARRANTY_ALERT_LIMIT = CARD_RENDER_DATE + 1000 * 60 * 60 * 24 * 90;
 
 export default function EquipmentCard({
   item,
-  index = 0,
-  isEditing,
   isEditorMode,
-  editingItem,
   startEditing,
-  cancelEditing,
-  saveEditing,
-  handleDeleteItem,
-  handleDraftChange,
-  activeTab,
-  isPending
+  showPrices = true,
 }) {
+  const [imgError, setImgError] = useState(false);
+  const normalized = normalizeEquipmentItem(item);
+  const displayPrice =
+    normalized.status === 'wishlist'
+      ? normalized.target_price
+      : normalized.purchase_price;
+  const primaryPhoto = (normalized.photo_urls || []).find(isSafeExternalUrl);
+  const hasWarrantyAlert =
+    normalized.warranty_until &&
+    new Date(normalized.warranty_until).getTime() <
+      WARRANTY_ALERT_LIMIT &&
+    new Date(normalized.warranty_until).getTime() >= CARD_RENDER_DATE;
 
-  const renderFeaturesList = (descText) => {
-    if (!descText) return null;
-    const features = descText.replace(/\.+$/, '').split(/\.\s+|\n+/).map(str => str.trim()).filter(str => str.length > 0);
-    return (
-      <ul className="list-disc list-outside ml-4 flex flex-col gap-1.5 marker:text-brand">
-        {features.map((feature, index) => (
-          <li key={index} className="text-[11px] sm:text-xs text-gray-300 leading-snug font-sans">
-            {feature}.
-          </li>
-        ))}
-      </ul>
-    );
+  const openEditor = () => {
+    if (isEditorMode) startEditing(normalized.category, normalized);
   };
 
   return (
-    <div
-      onClick={() => {
-        if (isEditorMode && !isEditing) startEditing(activeTab, item);
+    <article
+      onClick={openEditor}
+      onKeyDown={event => {
+        if (isEditorMode && (event.key === 'Enter' || event.key === ' ')) {
+          event.preventDefault();
+          openEditor();
+        }
       }}
-      className={`relative flex flex-col rounded-md transition-all duration-300 group h-full
-        ${isEditing
-          ? 'bg-surface border border-brand shadow-[0_0_30px_-8px_rgba(157,0,255,0.5)]'
-          : `bg-black border border-white/10 text-white hover:border-brand hover:shadow-[0_0_28px_-6px_rgba(157,0,255,0.45)] ${isEditorMode ? 'cursor-pointer' : ''}`}
-      `}
+      role={isEditorMode ? 'button' : undefined}
+      tabIndex={isEditorMode ? 0 : undefined}
+      aria-label={isEditorMode ? `Editar ${normalized.type}` : undefined}
+      className={`group relative flex h-full flex-col overflow-hidden rounded-xl border bg-black text-white transition-colors ${
+        isEditorMode
+          ? 'cursor-pointer border-white/10 hover:border-brand focus-visible:border-brand'
+          : 'border-white/10 hover:border-white/20'
+      }`}
     >
-      {isEditing ? (
-        <div className="p-4 sm:p-6 flex flex-col gap-4">
-          <div className="flex justify-between items-center pb-2 border-b border-line">
-            <span className="text-xs text-brand font-bold truncate mr-2">{"editing"}</span>
-            <div className="flex gap-2 shrink-0">
-              <button
-                type="button"
-                onClick={(e) => { e.stopPropagation(); handleDeleteItem(item.id); }}
-                disabled={isPending}
-                className="p-1.5 bg-red-600 text-white hover:bg-red-500 disabled:opacity-50 rounded transition-colors flex items-center justify-center cursor-pointer"
-                title="Eliminar"
-              >
-                <Trash2 className="w-4 h-4" />
-              </button>
-              <button
-                type="button"
-                onClick={(e) => { e.stopPropagation(); cancelEditing(); }}
-                disabled={isPending}
-                className="p-1.5 bg-white text-black hover:bg-gray-200 disabled:opacity-50 rounded transition-colors flex items-center justify-center cursor-pointer"
-                title="Cancelar"
-              >
-                <X className="w-4 h-4" />
-              </button>
-              <button
-                type="button"
-                onClick={(e) => { e.stopPropagation(); saveEditing(); }}
-                disabled={isPending}
-                className="p-1.5 bg-brand text-white hover:bg-brand/80 disabled:opacity-50 rounded transition-colors flex items-center justify-center cursor-pointer"
-                title="Guardar"
-              >
-                {isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
-              </button>
-            </div>
+      <div className="flex flex-1 flex-col p-4 sm:p-5">
+        <div className="flex items-start gap-3 border-b border-line pb-4">
+          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-brand text-white shadow-[0_0_14px_-2px_rgba(157,0,255,0.6)]">
+            <i className={`${normalized.icon_name || 'fa-solid fa-box'} text-sm`} />
           </div>
-
-          <div className="flex flex-col gap-3">
-            <div className="flex flex-col gap-1">
-              <label className="text-[10px] text-gray-500">type</label>
-              <input
-                value={editingItem.draft.type}
-                onChange={(e) => handleDraftChange('type', e.target.value)}
-                className="bg-black border border-line-strong rounded px-2 py-1.5 text-xs outline-none focus:border-brand transition-colors w-full"
-              />
+          <div className="min-w-0 flex-1">
+            <div className="flex flex-wrap items-center gap-2">
+              <h3 className="break-words text-sm font-bold lowercase tracking-tight text-brand sm:text-base">
+                {String(normalized.type || 'sin tipo').replace(/[_\s]+/g, ' ')}
+              </h3>
+              {normalized.is_public === false && isEditorMode && (
+                <span title="Oculto para visitantes">
+                  <EyeOff className="h-3.5 w-3.5 text-amber-400" />
+                </span>
+              )}
             </div>
-            <div className="flex flex-col gap-1">
-              <label className="text-[10px] text-gray-500">brand</label>
-              <input
-                value={editingItem.draft.brand}
-                onChange={(e) => handleDraftChange('brand', e.target.value)}
-                className="bg-black border border-line-strong rounded px-2 py-1.5 text-xs outline-none focus:border-brand transition-colors w-full"
-              />
-            </div>
-            <div className="flex flex-col gap-1">
-              <label className="text-[10px] text-gray-500">model</label>
-              <input
-                value={editingItem.draft.model}
-                onChange={(e) => handleDraftChange('model', e.target.value)}
-                className="bg-black border border-line-strong rounded px-2 py-1.5 text-xs outline-none focus:border-brand transition-colors w-full"
-              />
-            </div>
-            <div className="flex flex-col gap-1">
-              <label className="text-[10px] text-gray-500">oficial_url</label>
-              <input
-                value={editingItem.draft.website_url || ''}
-                onChange={(e) => handleDraftChange('website_url', e.target.value)}
-                className="bg-black border border-line-strong rounded px-2 py-1.5 text-xs outline-none focus:border-brand transition-colors w-full"
-              />
-            </div>
-            <div className="flex flex-col gap-1">
-              <label className="text-[10px] text-gray-500">icono (fontawesome)</label>
-              <input
-                value={editingItem.draft.icon_name || ''}
-                onChange={(e) => handleDraftChange('icon_name', e.target.value)}
-                className="bg-black border border-line-strong rounded px-2 py-1.5 text-xs outline-none focus:border-brand transition-colors w-full"
-              />
-            </div>
-            <div className="flex flex-col gap-1">
-              <label className="text-[10px] text-gray-500">features</label>
-              <textarea
-                value={editingItem.draft.description}
-                onChange={(e) => handleDraftChange('description', e.target.value)}
-                className="bg-black border border-line-strong rounded px-2 py-1.5 text-xs outline-none focus:border-brand transition-colors min-h-[80px] resize-none w-full font-sans"
-              />
-            </div>
+            <p className="mt-0.5 truncate text-xs uppercase text-gray-400">
+              {normalized.item_kind}
+            </p>
           </div>
-        </div>
-      ) : (
-        <div className="p-4 sm:p-6 flex flex-col h-full relative">
-          <div className="flex items-center gap-3 pb-4 border-b border-line">
-            <div className="w-8 h-8 shrink-0 rounded-md bg-brand flex items-center justify-center text-white shadow-[0_0_14px_-2px_rgba(157,0,255,0.6)]">
-              <i className={`${item.icon_name} text-[14px] leading-none`} />
-            </div>
-            <h3 className="text-sm sm:text-base font-bold tracking-tight text-brand lowercase flex items-center break-words m-0">
-              {item.type.replace(/\s+/g, '_')}
-            </h3>
-            {item.website_url && (
-              <a
-                href={item.website_url}
-                target="_blank"
-                rel="noopener noreferrer"
-                onClick={(e) => e.stopPropagation()}
-                className="ms-auto p-1.5 sm:p-2 bg-transparent border border-brand text-brand hover:bg-brand hover:text-white rounded-md transition-colors flex items-center justify-center shrink-0 cursor-pointer"
-                title="Web"
-              >
-                <i className="fa-solid fa-arrow-up-right-from-square text-[12px] sm:text-[14px] leading-none" />
-              </a>
+          <div className="flex flex-wrap items-center gap-1.5 shrink-0">
+            {normalized.planned_for && (
+              <span className="flex items-center gap-1.5 rounded-lg border border-brand/40 bg-brand/10 px-2.5 py-1 text-xs font-bold uppercase tracking-wider text-brand">
+                <CalendarClock className="h-3.5 w-3.5" />
+                {normalized.planned_for}
+              </span>
             )}
+            {hasWarrantyAlert && (
+              <span className="rounded-lg border border-amber-500/40 bg-amber-500/10 px-2.5 py-1 text-xs font-bold uppercase tracking-wider text-amber-400">
+                garantía por vencer
+              </span>
+            )}
+            <span
+              className={`rounded-lg border px-2.5 py-1 text-xs font-bold uppercase tracking-wider ${
+                STATUS_STYLES[normalized.status] || STATUS_STYLES.active
+              }`}
+            >
+              {STATUS_LABELS[normalized.status] || normalized.status}
+            </span>
           </div>
+        </div>
 
-          <div className="flex flex-row gap-4 pt-4 flex-1">
-            <div className="flex flex-col gap-4 w-1/2 shrink-0 pr-4 border-r border-line">
-              <div className="flex flex-col gap-0.5">
-                <span className="text-[10px] text-gray-500 font-bold uppercase">brand</span>
-                <span className="text-sm font-bold text-white uppercase break-words">{item.brand}</span>
-              </div>
-              <div className="flex flex-col gap-0.5">
-                <span className="text-[10px] text-gray-500 font-bold uppercase">model</span>
-                <span className="text-sm font-bold text-gray-300 uppercase break-words">{item.model}</span>
-              </div>
+        <div className="py-4">
+          <div className="flex items-start gap-4">
+            {/* Contenedor de Imagen Cuadrada Permanente */}
+            <div className="relative aspect-square w-28 shrink-0 overflow-hidden rounded-xl border border-white/10 bg-white/[0.03] shadow-md transition-colors group-hover:border-brand/40 sm:w-32">
+              {primaryPhoto && !imgError ? (
+                /* eslint-disable-next-line @next/next/no-img-element */
+                <img
+                  src={primaryPhoto}
+                  alt={`Vista de ${normalized.brand || normalized.type} ${normalized.model || ''}`}
+                  className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+                  onError={() => setImgError(true)}
+                />
+              ) : (
+                <div className="flex h-full w-full flex-col items-center justify-center p-2 text-center text-gray-500">
+                  <ImageOff className="h-6 w-6 opacity-60" />
+                  <span className="mt-1 text-[11px] font-medium tracking-tight text-gray-400">
+                    sin imagen
+                  </span>
+                </div>
+              )}
             </div>
-            <div className="flex flex-col w-1/2">
-              {renderFeaturesList(item.description)}
+
+            {/* Elementos de texto posicionados a la derecha */}
+            <div className="min-w-0 flex-1 space-y-2.5">
+              <div>
+                <p className="text-[10px] font-bold uppercase tracking-wider text-gray-400">marca</p>
+                <p
+                  className={`truncate text-sm font-bold uppercase ${
+                    normalized.brand ? 'text-white' : 'font-normal italic text-gray-500 lowercase'
+                  }`}
+                >
+                  {normalized.brand || 'vacío'}
+                </p>
+              </div>
+              <div>
+                <p className="text-[10px] font-bold uppercase tracking-wider text-gray-400">modelo</p>
+                <p
+                  className={`truncate text-xs font-bold uppercase ${
+                    normalized.model ? 'text-gray-300' : 'font-normal italic text-gray-500 lowercase'
+                  }`}
+                >
+                  {normalized.model || 'vacío'}
+                </p>
+              </div>
+              {showPrices && (
+                <div>
+                  <p className="text-[10px] font-bold uppercase tracking-wider text-gray-400">
+                    {normalized.status === 'wishlist' ? 'objetivo' : 'inversión'}
+                  </p>
+                  <p
+                    className={`text-sm font-bold ${
+                      displayPrice !== null ? 'text-white' : 'font-normal italic text-gray-500 lowercase'
+                    }`}
+                  >
+                    {displayPrice !== null
+                      ? formatMoney(displayPrice, normalized.currency)
+                      : 'vacío'}
+                  </p>
+                </div>
+              )}
             </div>
           </div>
         </div>
-      )}
-    </div>
+
+        {normalized.description && (
+          <p className="border-t border-line pt-3 font-sans text-xs leading-relaxed text-gray-400">
+            {normalized.description}
+          </p>
+        )}
+
+        <div className="mt-auto pt-3">
+          {normalized.tags.length > 0 && (
+            <div className="flex flex-wrap items-center gap-1.5">
+              <Tag className="mr-0.5 h-3.5 w-3.5 text-gray-400" />
+              {normalized.tags.slice(0, 4).map(tag => (
+                <span
+                  key={tag}
+                  className="rounded-lg border border-line bg-white/[0.04] px-2 py-0.5 text-xs text-gray-300"
+                >
+                  {tag}
+                </span>
+              ))}
+            </div>
+          )}
+
+          {(isSafeExternalUrl(normalized.website_url) ||
+            normalized.manual_urls.some(isSafeExternalUrl)) && (
+            <div className="mt-3 flex items-center gap-2 border-t border-line pt-3">
+              {isSafeExternalUrl(normalized.website_url) && (
+                <a
+                  href={normalized.website_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={event => event.stopPropagation()}
+                  className="flex min-h-9 items-center gap-2 rounded-lg border border-brand/40 px-2.5 text-xs text-brand hover:bg-brand/10"
+                >
+                  <i className="fa-solid fa-arrow-up-right-from-square" />
+                  sitio
+                </a>
+              )}
+              {normalized.manual_urls.find(isSafeExternalUrl) && (
+                <a
+                  href={normalized.manual_urls.find(isSafeExternalUrl)}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={event => event.stopPropagation()}
+                  className="flex min-h-9 items-center gap-2 rounded-lg border border-line px-2.5 text-xs text-gray-400 hover:border-brand hover:text-brand"
+                >
+                  <FileText className="h-3.5 w-3.5" />
+                  manual
+                </a>
+              )}
+            </div>
+          )}
+        </div>
+      </div>
+    </article>
   );
 }

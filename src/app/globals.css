@@ -13,11 +13,37 @@
   
   --color-surface: #0b0b0b;       
   --color-panel: #070707;         
-  --color-line: #232323;          
-  --color-line-strong: #3a3a3a;   
+  --color-line: #333333;          
+  --color-line-strong: #505050;   
 
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
+}
+
+@layer utilities {
+  .border {
+    border-width: 2px;
+  }
+  .border-t {
+    border-top-width: 2px;
+  }
+  .border-b {
+    border-bottom-width: 2px;
+  }
+  .border-l {
+    border-left-width: 2px;
+  }
+  .border-r {
+    border-right-width: 2px;
+  }
+  .border-x {
+    border-left-width: 2px;
+    border-right-width: 2px;
+  }
+  .border-y {
+    border-top-width: 2px;
+    border-bottom-width: 2px;
+  }
 }
 
 @media (prefers-color-scheme: dark) {
@@ -41,6 +67,13 @@ body {
   text-rendering: optimizeLegibility;
 }
 
+:where(h1, h2, h3, h4, h5, h6, legend) {
+  text-transform: lowercase;
+}
+
+.brand-title {
+  text-transform: none;
+}
 
 * {
   scrollbar-width: thin;
@@ -68,7 +101,7 @@ body {
 :focus-visible {
   outline: 2px solid #9D00FF;
   outline-offset: 2px;
-  border-radius: 2px;
+  border-radius: 0.5rem;
 }
 
 
@@ -77,6 +110,24 @@ textarea:focus-visible,
 select:focus-visible {
   outline: none;
 }
+
+/* Custom styling for number inputs & removal of native OS spin buttons */
+input[type="number"]::-webkit-outer-spin-button,
+input[type="number"]::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+input[type="number"] {
+  -moz-appearance: textfield;
+}
+
+input[type="date"],
+input[type="time"],
+input[type="datetime-local"] {
+  color-scheme: dark;
+}
+
+
 
 
 @keyframes rise {
@@ -91,14 +142,24 @@ select:focus-visible {
   0%   { opacity: 0; transform: scale(0.96) translateY(8px); }
   100% { opacity: 1; transform: scale(1) translateY(0); }
 }
+@keyframes slide-in {
+  0%   { opacity: 0; transform: translate3d(24px, 0, 0); }
+  100% { opacity: 1; transform: translate3d(0, 0, 0); }
+}
 
 .animate-rise { animation: rise 0.5s cubic-bezier(0.22, 1, 0.36, 1) backwards; }
 .animate-fade-in { animation: fade-in 0.4s ease backwards; }
 .animate-pop-in { animation: pop-in 0.28s cubic-bezier(0.22, 1, 0.36, 1) backwards; }
+.animate-slide-in {
+  animation: slide-in 0.22s cubic-bezier(0.22, 1, 0.36, 1) backwards;
+  backface-visibility: hidden;
+  will-change: transform, opacity;
+}
 
 @media (prefers-reduced-motion: reduce) {
   html { scroll-behavior: auto; }
   .animate-rise,
   .animate-fade-in,
-  .animate-pop-in { animation: none; }
+  .animate-pop-in,
+  .animate-slide-in { animation: none; }
 }

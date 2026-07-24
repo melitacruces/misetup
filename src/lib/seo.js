@@ -2,9 +2,9 @@ const siteUrl = (process.env.NEXT_PUBLIC_SITE_URL || 'https://misetup.melitacruc
 
 export const siteConfig = {
   name: 'MiSetup',
-  title: 'MiSetup - Dashboard Interactivo',
+  title: 'MiSetup - Panel de Inventario Personal',
   description:
-    'Dashboard interactivo para organizar hardware, software y herramientas digitales de un setup personal o profesional.',
+    'Inventario y planner de upgrades para documentar y hacer evolucionar un setup personal o profesional.',
   url: siteUrl,
   locale: 'es_CL',
   creator: 'Luis Andres Melita Cruces',
@@ -14,6 +14,9 @@ export const siteConfig = {
     'inventario de hardware',
     'dashboard de equipamiento',
     'gestor de setup',
+    'upgrade planner',
+    'wishlist de hardware',
+    'inventario de setup',
     'herramientas digitales',
     'equipamiento tecnologico',
     'Next.js dashboard',
@@ -25,9 +28,9 @@ export const siteConfig = {
 };
 
 export const defaultOpenGraphImage = {
-  url: '/opengraph-image',
-  width: 1200,
-  height: 630,
+  url: '/og.png',
+  width: 1731,
+  height: 909,
   alt: 'MiSetup dashboard de inventario para setups',
 };
 

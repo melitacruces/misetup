@@ -8,9 +8,9 @@ const eslintConfig = defineConfig([
       "react-hooks/set-state-in-effect": "off",
     },
   },
-  // Override default ignores of eslint-config-next.
+  // Sobrescribe la configuración de archivos ignorados por defecto en eslint-config-next.
   globalIgnores([
-    // Default ignores of eslint-config-next:
+    // Patrones de archivos y carpetas ignorados por defecto:
     ".next/**",
     "out/**",
     "build/**",

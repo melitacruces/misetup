@@ -1,91 +1,121 @@
-import React, { useState } from 'react';
-import { Inbox } from 'lucide-react';
-import EquipmentCard from './EquipmentCard';
+'use client';
+
+import { useState } from 'react';
+import { ArrowDown, ArrowUp, GripVertical, Inbox } from 'lucide-react';
+import EquipmentCard from '@/components/ui/EquipmentCard';
 
 export default function EquipmentGrid({
   activeItems,
-  editingItem,
   isEditorMode,
   startEditing,
-  cancelEditing,
-  saveEditing,
-  handleDeleteItem,
-  handleDraftChange,
   handleReorderItems,
-  activeTab,
-  isPending
+  isPending,
+  showPrices,
+  canReorder = true,
 }) {
-  const [draggedIdx, setDraggedIdx] = useState(null);
-  const [dragOverIdx, setDragOverIdx] = useState(null);
+  const [draggedIndex, setDraggedIndex] = useState(null);
+  const [dragOverIndex, setDragOverIndex] = useState(null);
 
-  const handleDragStart = (e, index) => {
-    if (!isEditorMode || editingItem) return;
-    setDraggedIdx(index);
-    e.dataTransfer.effectAllowed = 'move';
+  const moveItem = (index, delta) => {
+    const target = index + delta;
+    if (target < 0 || target >= activeItems.length) return;
+    const orderedIds = activeItems.map(item => item.id);
+    const [moved] = orderedIds.splice(index, 1);
+    orderedIds.splice(target, 0, moved);
+    handleReorderItems(orderedIds);
   };
 
-  const handleDragOver = (e, index) => {
-    if (!isEditorMode || editingItem) return;
-    e.preventDefault();
-    if (dragOverIdx !== index) setDragOverIdx(index);
-  };
-
-  const handleDrop = (e, targetIdx) => {
-    if (!isEditorMode || editingItem || draggedIdx === null) return;
-    e.preventDefault();
-    setDragOverIdx(null);
-    if (draggedIdx !== targetIdx) {
-      const newOrderedIds = [...activeItems].map(i => i.id);
-      const [movedItem] = newOrderedIds.splice(draggedIdx, 1);
-      newOrderedIds.splice(targetIdx, 0, movedItem);
-      handleReorderItems(newOrderedIds);
+  const handleDrop = (event, targetIndex) => {
+    if (!isEditorMode || !canReorder || draggedIndex === null) return;
+    event.preventDefault();
+    setDragOverIndex(null);
+    if (draggedIndex !== targetIndex) {
+      const orderedIds = activeItems.map(item => item.id);
+      const [moved] = orderedIds.splice(draggedIndex, 1);
+      orderedIds.splice(targetIndex, 0, moved);
+      handleReorderItems(orderedIds);
     }
-    setDraggedIdx(null);
+    setDraggedIndex(null);
   };
 
   return (
-    <div className="p-4 sm:p-6 lg:p-6">
-      <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 items-stretch -m-2 lg:-m-3">
+    <div>
+      <div className="grid grid-cols-1 items-stretch gap-4 sm:gap-6 lg:grid-cols-2 xl:grid-cols-3">
         {activeItems.map((item, index) => (
           <div
             key={item.id}
-            draggable={isEditorMode && !editingItem}
-            onDragStart={(e) => handleDragStart(e, index)}
-            onDragOver={(e) => handleDragOver(e, index)}
-            onDrop={(e) => handleDrop(e, index)}
-            onDragEnd={() => { setDraggedIdx(null); setDragOverIdx(null); }}
-            className={`relative h-full p-2 lg:p-3 transition-all duration-200 rounded-md ${
-              draggedIdx === index ? 'opacity-80 z-20' : ''
+            draggable={isEditorMode && canReorder && !isPending}
+            onDragStart={event => {
+              if (!isEditorMode || !canReorder || isPending) return;
+              setDraggedIndex(index);
+              event.dataTransfer.effectAllowed = 'move';
+            }}
+            onDragOver={event => {
+              if (!isEditorMode || !canReorder || isPending) return;
+              event.preventDefault();
+              setDragOverIndex(index);
+            }}
+            onDrop={event => handleDrop(event, index)}
+            onDragEnd={() => {
+              setDraggedIndex(null);
+              setDragOverIndex(null);
+            }}
+            className={`group/reorder relative h-full rounded-lg ${
+              draggedIndex === index ? 'opacity-60' : ''
+            } ${
+              dragOverIndex === index && draggedIndex !== index
+                ? 'ring-2 ring-brand ring-offset-2 ring-offset-black'
+                : ''
             }`}
           >
-            {dragOverIdx === index && draggedIdx !== index && (
-              <div className={`absolute top-2 lg:top-3 bottom-2 lg:bottom-3 w-[2px] bg-brand z-50 pointer-events-none shadow-[0_0_10px_#9d00ff] ${draggedIdx < index ? '-right-[1px]' : '-left-[1px]'}`} />
+            {isEditorMode && canReorder && (
+              <div className="absolute right-4 bottom-4 z-10 flex h-9 items-center gap-1 rounded-lg border border-line bg-black/90 px-1 opacity-100 sm:bottom-5 sm:right-5 sm:opacity-0 sm:transition-opacity sm:group-hover/reorder:opacity-100 sm:group-focus-within/reorder:opacity-100">
+                <GripVertical className="mx-0.5 h-3.5 w-3.5 text-gray-400" aria-hidden="true" />
+                <button
+                  type="button"
+                  onClick={event => {
+                    event.stopPropagation();
+                    moveItem(index, -1);
+                  }}
+                  disabled={index === 0 || isPending}
+                  className="flex h-7 w-7 items-center justify-center rounded-lg text-gray-400 transition-colors hover:bg-white/10 hover:text-white disabled:opacity-25"
+                  aria-label={`Mover ${item.type} antes`}
+                >
+                  <ArrowUp className="h-3.5 w-3.5" />
+                </button>
+                <button
+                  type="button"
+                  onClick={event => {
+                    event.stopPropagation();
+                    moveItem(index, 1);
+                  }}
+                  disabled={index === activeItems.length - 1 || isPending}
+                  className="flex h-7 w-7 items-center justify-center rounded-lg text-gray-400 transition-colors hover:bg-white/10 hover:text-white disabled:opacity-25"
+                  aria-label={`Mover ${item.type} después`}
+                >
+                  <ArrowDown className="h-3.5 w-3.5" />
+                </button>
+              </div>
             )}
 
             <EquipmentCard
               item={item}
-              index={index}
-              isEditing={editingItem?.id === item.id}
               isEditorMode={isEditorMode}
-              editingItem={editingItem}
               startEditing={startEditing}
-              cancelEditing={cancelEditing}
-              saveEditing={saveEditing}
-              handleDeleteItem={handleDeleteItem}
-              handleDraftChange={handleDraftChange}
-              activeTab={activeTab}
-              isPending={isPending}
+              showPrices={showPrices}
             />
           </div>
         ))}
 
         {activeItems.length === 0 && (
-          <div className="col-span-full py-20 flex flex-col items-center justify-center gap-3 text-gray-500 border border-dashed border-line rounded-md bg-surface/40 animate-fade-in">
-            <div className="w-11 h-11 rounded-md border border-line flex items-center justify-center text-gray-600">
-              <Inbox className="w-5 h-5" />
+          <div className="col-span-full flex flex-col items-center justify-center gap-3 rounded-lg border border-dashed border-line bg-surface/40 py-20 text-gray-500 animate-fade-in">
+            <div className="flex h-11 w-11 items-center justify-center rounded-lg border border-line text-gray-400">
+              <Inbox className="h-5 w-5" />
             </div>
-            <p className="text-xs font-mono text-gray-400">/empty</p>
-            <p className="text-[11px] text-gray-600">sin equipos en esta categoría</p>
+            <p className="text-xs text-gray-400">/sin_resultados</p>
+            <p className="text-xs text-gray-400">
+              ajusta los filtros o crea un nuevo elemento
+            </p>
           </div>
         )}
       </div>

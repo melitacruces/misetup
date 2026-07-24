@@ -1,69 +1,167 @@
-import React from 'react';
-import { Menu, Lock, Unlock, Plus, Loader2 } from 'lucide-react';
+import {
+  BookOpenCheck,
+  Download,
+  LayoutDashboard,
+  ListFilter,
+  Loader2,
+  Lock,
+  Menu,
+  Plus,
+  RefreshCcw,
+  Unlock,
+} from 'lucide-react';
+
+const VIEWS = [
+  { id: 'overview', label: 'overview', icon: LayoutDashboard },
+  { id: 'inventory', label: 'inventory', icon: ListFilter },
+  { id: 'planner', label: 'planner', icon: BookOpenCheck },
+];
 
 export default function Header({
   CATEGORIES,
   activeTab,
+  activeView,
+  setActiveView,
   setIsMobileMenuOpen,
   isEditorMode,
-  setShowPasswordPrompt,
   handleEditorLogin,
   logoutEditor,
   handleAddItem,
+  handleExport,
+  handleReset,
   isPending,
-  demo
+  preview,
 }) {
-  const currentCategory = CATEGORIES[activeTab] || { icon: <i className="fa-solid fa-folder"></i>, title: '...' };
+  const currentCategory = CATEGORIES[activeTab] || {
+    icon: <i className="fa-solid fa-folder" />,
+    title: 'inventory',
+  };
+  const viewTitle =
+    activeView === 'overview'
+      ? 'overview'
+      : activeView === 'planner'
+        ? 'upgrade_planner'
+        : currentCategory.title;
 
   return (
-    <header className="h-20 flex flex-col justify-center px-4 sm:px-6 lg:px-6 border-b border-line sticky top-0 bg-[#000000]/90 backdrop-blur-md z-10 shrink-0 relative">
-      <div className="flex items-center justify-between w-full">
-        <div className="flex items-center gap-3">
+    <header className="sticky top-0 z-20 border-b border-line bg-black/90 px-4 py-3 backdrop-blur-xl sm:px-6 lg:flex lg:h-16 lg:items-center lg:py-0">
+      <div className="flex w-full items-center justify-between gap-3">
+        <div className="flex min-w-0 items-center gap-3">
           <button
-            className="lg:hidden p-1.5 text-gray-300 hover:text-brand hover:bg-brand/10 rounded cursor-pointer transition-colors"
+            type="button"
+            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg text-gray-300 transition-colors hover:bg-brand/10 hover:text-brand lg:hidden"
             onClick={() => setIsMobileMenuOpen(true)}
+            aria-label="Abrir navegación"
           >
-            <Menu className="w-6 h-6" />
+            <Menu className="h-6 w-6" />
           </button>
-          <span className="flex items-center gap-2.5 text-white font-bold text-xl">
-            <span className="text-brand flex items-center text-lg">{currentCategory.icon}</span>
-            {currentCategory.title}
+          <span className="flex min-w-0 items-center gap-2.5 text-lg font-bold text-white sm:text-xl">
+            <span className="flex shrink-0 items-center text-base text-brand">
+              {activeView === 'inventory' ? currentCategory.icon : (
+                <i className={activeView === 'planner' ? 'fa-solid fa-wand-magic-sparkles' : 'fa-solid fa-chart-simple'} />
+              )}
+            </span>
+            <span className="truncate lowercase">{viewTitle}</span>
           </span>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2">
+          {preview && (
+            <a
+              href="https://github.com/melitacruces/misetup"
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label="Abrir GitHub"
+              className="hidden min-h-10 items-center justify-center gap-2 rounded-lg border border-line px-3 text-xs font-bold text-gray-400 transition-colors hover:border-brand hover:text-brand md:flex"
+            >
+              <i className="fa-brands fa-github text-base shrink-0" />
+              <span>github</span>
+            </a>
+          )}
+          <button
+            type="button"
+            onClick={handleExport}
+            aria-label="Exportar setup"
+            className="flex min-h-10 items-center justify-center gap-2 rounded-lg border border-line px-3 text-xs font-bold text-gray-400 transition-colors hover:border-brand hover:text-brand disabled:opacity-40"
+          >
+            <Download className="h-4 w-4 shrink-0" />
+            <span>exportar</span>
+          </button>
+          {preview && (
+            <button
+              type="button"
+              onClick={handleReset}
+              disabled={isPending}
+              aria-label="Reiniciar escenario"
+              className="flex min-h-10 items-center justify-center gap-2 rounded-lg border border-line px-3 text-xs font-bold text-gray-400 transition-colors hover:border-brand hover:text-brand disabled:opacity-40"
+            >
+              <RefreshCcw className="h-4 w-4 shrink-0" />
+              <span>reiniciar</span>
+            </button>
+          )}
           {!isEditorMode ? (
             <button
-              onClick={() => demo ? handleEditorLogin() : setShowPasswordPrompt(true)}
-              className="flex items-center justify-center gap-2 p-2 sm:px-3 sm:py-2 border border-brand text-brand hover:bg-brand/10 text-xs font-bold rounded transition-all shrink-0 cursor-pointer min-w-[32px] min-h-[32px]"
-              title="Modo Editor"
+              type="button"
+              onClick={handleEditorLogin}
+              className="flex min-h-10 items-center justify-center gap-2 rounded-lg border border-brand px-3 text-xs font-bold text-brand transition-colors hover:bg-brand/10"
             >
-              <Lock className="w-4 h-4 text-brand shrink-0" />
-              <span className="hidden sm:inline">editor</span>
+              <Lock className="h-4 w-4 shrink-0" />
+              <span>editor</span>
             </button>
           ) : (
             <button
+              type="button"
               onClick={logoutEditor}
-              className="flex items-center justify-center gap-2 p-2 sm:px-3 sm:py-2 border border-brand/50 text-brand hover:bg-brand/10 hover:border-brand text-xs font-bold rounded transition-all shrink-0 cursor-pointer min-w-[32px] min-h-[32px]"
-              title="Modo Espectador"
+              className="flex min-h-10 items-center justify-center gap-2 rounded-lg border border-brand/50 px-3 text-xs font-bold text-brand transition-colors hover:bg-brand/10"
             >
-              <Unlock className="w-4 h-4 shrink-0" />
-              <span className="hidden sm:inline">viewer</span>
+              <Unlock className="h-4 w-4 shrink-0" />
+              <span>viewer</span>
             </button>
           )}
 
-          {isEditorMode && (
+          {isEditorMode && activeView !== 'overview' && (
             <button
+              type="button"
               onClick={handleAddItem}
               disabled={isPending}
-              className="flex items-center justify-center gap-2 p-2 sm:px-4 sm:py-2 bg-brand text-white hover:bg-brand/80 disabled:opacity-50 text-xs font-bold rounded transition-opacity shrink-0 cursor-pointer min-w-[32px] min-h-[32px]"
+              data-guide="add-equipment"
+              className="flex min-h-10 items-center justify-center gap-2 rounded-lg bg-brand px-3 text-xs font-bold text-white transition-opacity hover:opacity-85 disabled:opacity-40"
+              aria-label={activeView === 'planner' ? 'Nuevo upgrade' : 'Nuevo elemento'}
             >
-              <Plus className="w-4 h-4 shrink-0" />
-              <span className="hidden sm:inline">new</span>
+              {isPending ? (
+                <Loader2 className="h-4 w-4 animate-spin shrink-0" />
+              ) : (
+                <Plus className="h-4 w-4 shrink-0" />
+              )}
+              <span>
+                {activeView === 'planner' ? 'upgrade' : 'nuevo'}
+              </span>
             </button>
           )}
         </div>
       </div>
+
+      <nav className="mt-3 flex gap-1 overflow-x-auto rounded-lg border border-line bg-panel p-1 lg:hidden">
+        {VIEWS.map(view => {
+          const Icon = view.icon;
+          const active = activeView === view.id;
+          return (
+            <button
+              key={view.id}
+              type="button"
+              onClick={() => setActiveView(view.id)}
+              className={`flex min-h-9 flex-1 items-center justify-center gap-2 rounded-lg px-3 text-xs font-bold transition-colors ${
+                active
+                  ? 'bg-white text-black'
+                  : 'text-gray-400 hover:text-brand'
+              }`}
+            >
+              <Icon className="h-3.5 w-3.5" />
+              {view.label}
+            </button>
+          );
+        })}
+      </nav>
     </header>
   );
 }

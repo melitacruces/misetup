@@ -1,6 +1,21 @@
-import React, { useState } from 'react';
+'use client';
+
+import { useEffect, useState } from 'react';
 import Image from 'next/image';
-import { X, Loader2, Plus, Trash2 } from 'lucide-react';
+import {
+  BookOpenCheck,
+  LayoutDashboard,
+  Loader2,
+  Pencil,
+  Plus,
+  Trash2,
+  X,
+} from 'lucide-react';
+
+const VIEW_LINKS = [
+  { id: 'overview', label: 'overview', icon: LayoutDashboard },
+  { id: 'planner', label: 'planner', icon: BookOpenCheck },
+];
 
 export default function Sidebar({
   isMobileMenuOpen,
@@ -10,274 +25,348 @@ export default function Sidebar({
   items = [],
   activeTab,
   setActiveTab,
+  activeView,
+  setActiveView,
   cancelEditing,
-  totalItems,
+  wishlistCount,
   isPending,
   isEditorMode,
   handleAddSection,
   handleDeleteSection,
   handleReorderSections,
-  handleUpdateSection
+  handleUpdateSection,
 }) {
   const [isAddingSection, setIsAddingSection] = useState(false);
   const [newSectionTitle, setNewSectionTitle] = useState('');
   const [newSectionIcon, setNewSectionIcon] = useState('fa-solid fa-folder');
-  const [draggedIdx, setDraggedIdx] = useState(null);
-  const [dragOverIdx, setDragOverIdx] = useState(null);
-
+  const [draggedIndex, setDraggedIndex] = useState(null);
+  const [dragOverIndex, setDragOverIndex] = useState(null);
   const [editingSectionId, setEditingSectionId] = useState(null);
   const [editSectionTitle, setEditSectionTitle] = useState('');
   const [editSectionIcon, setEditSectionIcon] = useState('');
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (!isEditorMode) {
       setEditingSectionId(null);
       setIsAddingSection(false);
     }
   }, [isEditorMode]);
 
-  const submitNewSection = () => {
-    if (newSectionTitle.trim()) {
-      handleAddSection(newSectionTitle.trim(), newSectionIcon);
+  const navigateView = view => {
+    cancelEditing();
+    setActiveView(view);
+    setIsMobileMenuOpen(false);
+  };
+
+  const submitNewSection = async () => {
+    if (!newSectionTitle.trim()) return;
+    const success = await handleAddSection(
+      newSectionTitle.trim(),
+      newSectionIcon
+    );
+    if (success) {
       setNewSectionTitle('');
       setIsAddingSection(false);
     }
   };
 
-  const handleDragStart = (e, index) => {
-    if (!isEditorMode) return;
-    setDraggedIdx(index);
-    e.dataTransfer.effectAllowed = 'move';
-  };
-
-  const handleDragOver = (e, index) => {
-    if (!isEditorMode) return;
-    e.preventDefault();
-    if (dragOverIdx !== index) setDragOverIdx(index);
-  };
-
-  const handleDrop = (e, targetIdx) => {
-    if (!isEditorMode || draggedIdx === null) return;
-    e.preventDefault();
-    setDragOverIdx(null);
-    if (draggedIdx !== targetIdx) {
-      const newOrderedIds = [...sections].map(s => s.id);
-      const [movedItem] = newOrderedIds.splice(draggedIdx, 1);
-      newOrderedIds.splice(targetIdx, 0, movedItem);
-      handleReorderSections(newOrderedIds);
+  const handleDrop = (event, targetIndex) => {
+    if (!isEditorMode || draggedIndex === null) return;
+    event.preventDefault();
+    setDragOverIndex(null);
+    if (draggedIndex !== targetIndex) {
+      const orderedIds = sections.map(section => section.id);
+      const [moved] = orderedIds.splice(draggedIndex, 1);
+      orderedIds.splice(targetIndex, 0, moved);
+      handleReorderSections(orderedIds);
     }
-    setDraggedIdx(null);
+    setDraggedIndex(null);
   };
 
   return (
     <>
       {isMobileMenuOpen && (
-        <div
-          className="fixed inset-0 bg-black/80 z-20 lg:hidden backdrop-blur-sm"
+        <button
+          type="button"
+          aria-label="Cerrar navegación"
+          className="fixed inset-0 z-30 bg-black/80 backdrop-blur-sm lg:hidden"
           onClick={() => setIsMobileMenuOpen(false)}
         />
       )}
 
-      <aside className={`
-        w-64 bg-panel border-r border-line flex flex-col fixed h-full z-30 transition-transform duration-300 ease-in-out
-        ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
-      `}>
-        <div className="h-20 flex items-center justify-between px-6 border-b border-line shrink-0">
-          <div className="flex items-center gap-2">
+      <aside
+        className={`fixed z-40 flex h-full w-64 flex-col border-r border-line bg-panel transition-transform duration-300 ease-in-out ${
+          isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
+        }`}
+      >
+        <div className="flex h-16 shrink-0 items-center justify-between border-b border-line px-6">
+          <button
+            type="button"
+            onClick={() => navigateView('overview')}
+            className="flex items-center gap-2"
+          >
             <Image
               src="/images/d.svg"
-              alt="Logo de MiSetup"
+              alt=""
               width={28}
               height={28}
-              className="w-7 h-7"
+              className="h-7 w-7"
               priority
             />
-            <h1 className="text-xl font-bold tracking-tighter flex items-center text-white">
+            <span className="text-xl font-bold tracking-tighter text-white">
               MiSetup
-            </h1>
-          </div>
+            </span>
+          </button>
           <button
-            className="lg:hidden p-2 -mr-2 text-gray-400 hover:text-brand hover:bg-brand/10 rounded cursor-pointer transition-colors"
+            type="button"
+            className="-mr-2 flex h-10 w-10 items-center justify-center rounded-lg text-gray-400 transition-colors hover:bg-brand/10 hover:text-brand lg:hidden"
             onClick={() => setIsMobileMenuOpen(false)}
+            aria-label="Cerrar navegación"
           >
-            <X className="w-5 h-5" />
+            <X className="h-5 w-5" />
           </button>
         </div>
 
-        <nav className="flex-1 py-6 px-6 flex flex-col overflow-y-auto -my-0.5">
-          {sections.map((section, idx) => {
-            const key = section.slug;
-            const cat = CATEGORIES[key];
-            if (!cat) return null;
-            const itemCount = items.filter(i => i.category === key).length;
-            
-            if (editingSectionId === section.id) {
+        <nav className="flex-1 overflow-y-auto px-4 py-5">
+          <p className="px-2 text-xs font-bold uppercase tracking-[0.18em] text-gray-400">
+            vistas
+          </p>
+          <div className="mt-2 space-y-1">
+            {VIEW_LINKS.map(view => {
+              const Icon = view.icon;
+              const active = activeView === view.id;
+              const count =
+                view.id === 'planner' ? wishlistCount : sections.length;
               return (
-                <div key={`edit-${section.id}`} className="mt-1 flex flex-col gap-2 p-3 bg-brand/10 rounded border border-brand/30">
-                  <input
-                    type="text"
-                    placeholder="Nombre (ej: desk)"
-                    className="w-full bg-black/50 border border-brand/30 rounded px-2 py-1.5 text-xs text-white focus:outline-none focus:border-brand"
-                    value={editSectionTitle}
-                    onChange={e => setEditSectionTitle(e.target.value)}
-                  />
-                  <input
-                    type="text"
-                    placeholder="Icono (ej: fa-solid fa-folder)"
-                    className="w-full bg-black/50 border border-brand/30 rounded px-2 py-1.5 text-xs text-white focus:outline-none focus:border-brand"
-                    value={editSectionIcon}
-                    onChange={e => setEditSectionIcon(e.target.value)}
-                  />
-                  <div className="flex justify-end gap-2 mt-1">
-                    <button
-                      className="text-xs text-gray-400 hover:text-white px-2 py-1 cursor-pointer"
-                      onClick={() => setEditingSectionId(null)}
-                    >
-                      Cancelar
-                    </button>
-                    <button
-                      className="text-xs bg-brand text-white px-3 py-1 rounded hover:bg-brand/80 cursor-pointer"
-                      onClick={() => {
-                        if (editSectionTitle.trim()) {
-                          handleUpdateSection(section.id, editSectionTitle.trim(), editSectionIcon);
-                          setEditingSectionId(null);
-                        }
-                      }}
-                    >
-                      Guardar
-                    </button>
-                  </div>
-                </div>
-              );
-            }
-
-            return (
-              <div
-                key={`view-${section.id}`}
-                draggable={isEditorMode && !editingSectionId}
-                onDragStart={(e) => handleDragStart(e, idx)}
-                onDragOver={(e) => handleDragOver(e, idx)}
-                onDrop={(e) => handleDrop(e, idx)}
-                onDragEnd={() => { setDraggedIdx(null); setDragOverIdx(null); }}
-                className={`relative py-0.5 flex items-center group gap-1 rounded transition-all duration-200 focus:outline-none ${
-                  draggedIdx === idx ? 'opacity-80 z-20' : ''
-                }`}
-              >
-                {dragOverIdx === idx && draggedIdx !== idx && (
-                  <div className={`absolute -left-2 -right-2 h-[2px] bg-brand z-50 pointer-events-none shadow-[0_0_8px_#9d00ff] ${draggedIdx < idx ? '-bottom-[1px]' : '-top-[1px]'}`} />
-                )}
-
                 <button
-                  onClick={() => {
-                    cancelEditing();
-                    setIsMobileMenuOpen(false);
+                  type="button"
+                  key={view.id}
+                  onClick={() => navigateView(view.id)}
+                  className={`flex min-h-11 w-full items-center gap-3 rounded-lg px-3 text-left text-xs font-bold transition-colors ${
+                    active
+                      ? 'bg-white text-black'
+                      : 'text-gray-400 hover:bg-brand/10 hover:text-brand'
+                  }`}
+                >
+                  <Icon className={`h-4 w-4 ${active ? 'text-brand' : ''}`} />
+                  <span className="flex-1">{view.label}</span>
+                  <span
+                    className={`text-xs font-semibold ${
+                      active ? 'text-brand' : 'text-gray-400'
+                    }`}
+                  >
+                    [{count}]
+                  </span>
+                </button>
+              );
+            })}
+          </div>
 
-                    if (activeTab === key) {
-                      if (isEditorMode) {
+          <div className="my-5 h-0.5 bg-line" />
+          <p className="px-2 text-xs font-bold uppercase tracking-[0.18em] text-gray-400">
+            secciones
+          </p>
+
+          <div className="mt-2 space-y-1">
+            {sections.map((section, index) => {
+              const key = section.slug;
+              const category = CATEGORIES[key];
+              if (!category) return null;
+              const itemCount = items.filter(item => item.category === key).length;
+              const active =
+                activeView === 'inventory' && activeTab === key;
+
+              if (editingSectionId === section.id) {
+                return (
+                  <div
+                    key={`edit-${section.id}`}
+                    className="space-y-2 rounded-lg border border-brand/30 bg-brand/10 p-3"
+                  >
+                    <input
+                      value={editSectionTitle}
+                      onChange={event => setEditSectionTitle(event.target.value)}
+                      placeholder="Nombre"
+                      className="min-h-10 w-full rounded-lg border border-brand/30 bg-black px-2 text-xs text-white outline-none focus:border-brand"
+                    />
+                    <input
+                      value={editSectionIcon}
+                      onChange={event => setEditSectionIcon(event.target.value)}
+                      placeholder="fa-solid fa-folder"
+                      className="min-h-10 w-full rounded-lg border border-brand/30 bg-black px-2 text-xs text-white outline-none focus:border-brand"
+                    />
+                    <div className="flex justify-end gap-2">
+                      <button
+                        type="button"
+                        onClick={() => setEditingSectionId(null)}
+                        className="min-h-9 px-2 text-xs text-gray-400"
+                      >
+                        cancelar
+                      </button>
+                      <button
+                        type="button"
+                        onClick={async () => {
+                          const success = await handleUpdateSection(
+                            section.id,
+                            editSectionTitle,
+                            editSectionIcon
+                          );
+                          if (success) setEditingSectionId(null);
+                        }}
+                        disabled={!editSectionTitle.trim() || isPending}
+                        className="min-h-9 rounded-lg bg-brand px-3 text-xs font-bold text-white disabled:opacity-40"
+                      >
+                        guardar
+                      </button>
+                    </div>
+                  </div>
+                );
+              }
+
+              return (
+                <div
+                  key={section.id}
+                  draggable={isEditorMode && !isPending}
+                  onDragStart={event => {
+                    if (!isEditorMode) return;
+                    setDraggedIndex(index);
+                    event.dataTransfer.effectAllowed = 'move';
+                  }}
+                  onDragOver={event => {
+                    if (!isEditorMode) return;
+                    event.preventDefault();
+                    setDragOverIndex(index);
+                  }}
+                  onDrop={event => handleDrop(event, index)}
+                  onDragEnd={() => {
+                    setDraggedIndex(null);
+                    setDragOverIndex(null);
+                  }}
+                  className={`group relative flex items-center gap-1 rounded-lg ${
+                    dragOverIndex === index && draggedIndex !== index
+                      ? 'ring-1 ring-brand'
+                      : ''
+                  } ${draggedIndex === index ? 'opacity-50' : ''}`}
+                >
+                  <button
+                    type="button"
+                    onClick={() => {
+                      cancelEditing();
+                      setActiveView('inventory');
+                      setActiveTab(key);
+                      setIsMobileMenuOpen(false);
+                    }}
+                    className={`flex min-h-11 flex-1 items-center gap-3 rounded-lg px-3 text-left text-xs transition-colors ${
+                      active
+                        ? 'bg-white font-bold text-black'
+                        : 'text-gray-400 hover:bg-white/[0.03] hover:text-gray-300'
+                    }`}
+                  >
+                    <span
+                      className={`flex h-5 w-5 items-center justify-center ${
+                        active ? 'text-brand' : ''
+                      }`}
+                    >
+                      {category.icon}
+                    </span>
+                    <span className="min-w-0 flex-1 truncate lowercase">{category.title}</span>
+                    <span
+                      className={`text-xs ${
+                        active ? 'text-brand font-semibold' : 'text-gray-400'
+                      }`}
+                    >
+                      [{itemCount}]
+                    </span>
+                  </button>
+                  {isEditorMode && (
+                    <button
+                      type="button"
+                      onClick={() => {
                         setEditingSectionId(section.id);
                         setEditSectionTitle(section.title);
                         setEditSectionIcon(section.icon_name || '');
-                      }
-                    } else {
-                      setActiveTab(key);
-                    }
-                  }}
-                  className={`flex-1 flex items-center justify-between px-3 py-2.5 rounded transition-all duration-200 cursor-pointer outline-none focus:outline-none focus-visible:outline-none focus:ring-0
-                    ${activeTab === key
-                      ? 'bg-white text-black shadow-[0_0_18px_-6px_rgba(255,255,255,0.5)]'
-                      : 'text-gray-400 hover:text-brand hover:bg-brand/10'
-                    }`}
-                >
-                  <div className="flex items-center gap-2.5">
-                    <span className={`shrink-0 transition-colors ${activeTab === key ? 'text-brand' : ''}`}>
-                      {cat.icon}
-                    </span>
-                    <span className="font-semibold text-xs">{cat.title}</span>
-                  </div>
-                  <span className={`text-[10px] tabular-nums ${activeTab === key ? 'text-brand font-bold' : 'text-gray-600'}`}>
-                    [{itemCount}]
-                  </span>
-                </button>
-
-                {isEditorMode && itemCount === 0 && (
-                  <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
-                    <button
-                      onClick={() => handleDeleteSection(section.id)}
-                      className="p-1.5 text-gray-500 hover:text-red-500 rounded cursor-pointer"
-                      title="Eliminar sección vacía"
+                      }}
+                      className="flex h-9 w-9 items-center justify-center rounded-lg text-gray-400 opacity-100 transition-colors hover:bg-brand/10 hover:text-brand sm:opacity-0 sm:group-hover:opacity-100 sm:focus:opacity-100"
+                      aria-label={`Editar sección ${section.title}`}
                     >
-                      <Trash2 className="w-3.5 h-3.5" />
+                      <Pencil className="h-3.5 w-3.5" />
                     </button>
-                  </div>
-                )}
-              </div>
-            );
-          })}
+                  )}
+                  {isEditorMode && itemCount === 0 && (
+                    <button
+                      type="button"
+                      onClick={() => handleDeleteSection(section.id)}
+                      className="flex h-9 w-9 items-center justify-center rounded-lg text-gray-400 opacity-100 transition-colors hover:bg-red-500/10 hover:text-red-400 sm:opacity-0 sm:group-hover:opacity-100"
+                      aria-label={`Eliminar sección ${section.title}`}
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </button>
+                  )}
+                </div>
+              );
+            })}
+          </div>
 
           {isEditorMode && !isAddingSection && (
             <button
+              type="button"
+              data-guide="add-section"
               onClick={() => setIsAddingSection(true)}
-              className="w-full flex items-center justify-between px-3 py-2.5 rounded transition-all duration-200 cursor-pointer text-brand/70 hover:text-brand bg-transparent hover:bg-brand/10 border border-dashed border-brand/30 hover:border-brand mt-1"
+              className="mt-2 flex min-h-11 w-full items-center gap-3 rounded-lg border border-dashed border-brand/30 px-3 text-xs text-brand/70 transition-colors hover:border-brand hover:bg-brand/10 hover:text-brand"
             >
-              <div className="flex items-center gap-2.5">
-                <span className="shrink-0 flex items-center justify-center">
-                  <Plus className="w-4 h-4" />
-                </span>
-                <span className="font-semibold text-xs">new</span>
-              </div>
+              <Plus className="h-4 w-4" />
+              nueva sección
             </button>
           )}
 
           {isEditorMode && isAddingSection && (
-            <div className="mt-2 flex flex-col gap-2 p-3 bg-brand/10 rounded border border-brand/30">
+            <div className="mt-2 space-y-2 rounded-lg border border-brand/30 bg-brand/10 p-3">
               <input
-                type="text"
-                placeholder="Nombre (ej: desk)"
-                className="w-full bg-black/50 border border-brand/30 rounded px-2 py-1.5 text-xs text-white focus:outline-none focus:border-brand"
                 value={newSectionTitle}
-                onChange={e => setNewSectionTitle(e.target.value)}
+                onChange={event => setNewSectionTitle(event.target.value)}
+                placeholder="Nombre de sección"
+                className="min-h-10 w-full rounded-lg border border-brand/30 bg-black px-2 text-xs text-white outline-none focus:border-brand"
+                autoFocus
               />
               <input
-                type="text"
-                placeholder="Icono (ej: fa-solid fa-folder)"
-                className="w-full bg-black/50 border border-brand/30 rounded px-2 py-1.5 text-xs text-white focus:outline-none focus:border-brand"
                 value={newSectionIcon}
-                onChange={e => setNewSectionIcon(e.target.value)}
+                onChange={event => setNewSectionIcon(event.target.value)}
+                placeholder="fa-solid fa-folder"
+                className="min-h-10 w-full rounded-lg border border-brand/30 bg-black px-2 text-xs text-white outline-none focus:border-brand"
               />
-              <div className="flex justify-end gap-2 mt-1">
+              <div className="flex justify-end gap-2">
                 <button
-                  className="text-xs text-gray-400 hover:text-white px-2 py-1 cursor-pointer"
+                  type="button"
                   onClick={() => setIsAddingSection(false)}
+                  className="min-h-9 px-2 text-xs text-gray-400"
                 >
-                  Cancelar
+                  cancelar
                 </button>
                 <button
-                  className="text-xs bg-brand text-white px-3 py-1 rounded hover:bg-brand/80 cursor-pointer"
+                  type="button"
                   onClick={submitNewSection}
+                  disabled={isPending || !newSectionTitle.trim()}
+                  className="min-h-9 rounded-lg bg-brand px-3 text-xs font-bold text-white disabled:opacity-40"
                 >
-                  Guardar
+                  guardar
                 </button>
               </div>
             </div>
           )}
         </nav>
 
-        <div className="p-6 border-t border-line bg-black shrink-0">
-          <div className="flex flex-col gap-1.5">
-            <span className="text-[10px] text-gray-500 break-all">items = {totalItems};</span>
-            <span className="text-[10px] text-gray-500 flex items-center gap-1.5">
-              status:
-              {isPending ? (
-                <span className="text-yellow-500 flex items-center gap-1.5">
-                  <Loader2 className="w-3 h-3 animate-spin" /> syncing
-                </span>
-              ) : (
-                <span className="text-green-500 flex items-center gap-1.5">
-                  <span className="w-1.5 h-1.5 rounded-full bg-green-500 shadow-[0_0_6px_rgba(34,197,94,0.8)]" />
-                  operational
-                </span>
-              )}
-            </span>
+        <div className="shrink-0 border-t border-line bg-black p-4">
+          <div className="flex items-center gap-2 px-2 text-xs text-gray-400">
+            {isPending ? (
+              <>
+                <Loader2 className="h-3 w-3 animate-spin text-amber-400" />
+                sincronizando
+              </>
+            ) : (
+              <>
+                <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 shadow-[0_0_6px_rgba(34,197,94,0.8)]" />
+                operational
+              </>
+            )}
           </div>
         </div>
       </aside>

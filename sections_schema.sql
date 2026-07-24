@@ -7,7 +7,7 @@ CREATE TABLE IF NOT EXISTS sections (
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- Seed data
+-- Inserción de datos iniciales para las secciones del sistema.
 INSERT INTO sections (slug, title, icon_name, position) VALUES 
 ('core', 'core', 'fa-solid fa-server', 0),
 ('desk', 'desk', 'fa-solid fa-computer-mouse', 1),
