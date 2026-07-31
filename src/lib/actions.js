@@ -3,8 +3,7 @@
 import { createHmac, timingSafeEqual } from 'node:crypto';
 import { cookies } from 'next/headers';
 import { revalidatePath } from 'next/cache';
-import { Client, neonConfig, types } from '@neondatabase/serverless';
-import ws from 'ws';
+import postgres from 'postgres';
 import {
   DEFAULT_PROFILE,
   normalizeProfile,
@@ -16,24 +15,22 @@ import {
   PREVIEW_PROFILE,
   PREVIEW_SECTIONS,
 } from '@/lib/previewData';
-
-neonConfig.webSocketConstructor = ws;
-types.setTypeParser(types.builtins.DATE, value => value);
+import { EMPTY_SETUP } from '@/lib/emptyData';
 
 const EDITOR_COOKIE = 'misetup_editor';
 const SESSION_MESSAGE = 'misetup-editor-session-v1';
 const EDITOR_SESSION_MAX_AGE = 60 * 60 * 12;
 
-function isDatabaseMode() {
-  return process.env.MISETUP_MODE === 'database';
+function isPreviewMode() {
+  return process.env.MISETUP_MODE === 'preview';
 }
 
 function getConfiguredConnectionString() {
-  return (
-    process.env.DATABASE_URL ||
-    process.env.POSTGRES_URL ||
-    process.env.POSTGRES_URL_NON_POOLING
-  );
+  return process.env.DATABASE_URL;
+}
+
+function isDatabaseMode() {
+  return !isPreviewMode() && Boolean(getConfiguredConnectionString());
 }
 
 function getConnectionString() {
@@ -47,53 +44,50 @@ function getConnectionString() {
 }
 
 function createSqlTag(connection) {
-  return (strings, ...values) => {
-    let text = strings[0];
-    for (let index = 0; index < values.length; index += 1) {
-      text += `$${index + 1}${strings[index + 1]}`;
-    }
-    return connection.query(text, values);
+  return async (strings, ...values) => {
+    const rows = await connection(strings, ...values);
+    return {
+      rows,
+      rowCount: rows.count ?? rows.length,
+    };
   };
 }
 
 async function withClient(callback, { readOnly = false } = {}) {
-  const connection = new Client({ connectionString: getConnectionString() });
-  let connected = false;
+  const connectionString = getConnectionString();
+  const isLocalConnection = /localhost|127\.0\.0\.1/.test(connectionString);
+  const connection = postgres(connectionString, {
+    max: 1,
+    ssl:
+      process.env.POSTGRES_SSL === 'disable' || isLocalConnection
+        ? false
+        : 'require',
+  });
+  const sql = createSqlTag(connection);
   let transactionStarted = false;
 
   try {
-    await connection.connect();
-    connected = true;
     if (readOnly) {
-      await connection.query('BEGIN TRANSACTION READ ONLY');
+      await sql`BEGIN TRANSACTION READ ONLY`;
       transactionStarted = true;
     }
 
-    const client = {
-      sql: createSqlTag(connection),
-      query: (text, values) => connection.query(text, values),
-    };
+    const client = { sql };
     const result = await callback(client);
 
-    if (transactionStarted) await connection.query('COMMIT');
+    if (transactionStarted) await sql`COMMIT`;
     return result;
   } catch (error) {
     if (transactionStarted) {
       try {
-        await connection.query('ROLLBACK');
+        await sql`ROLLBACK`;
       } catch {
         // La conexión puede cerrarse antes de que la transacción de lectura se revierta.
       }
     }
     throw error;
   } finally {
-    if (connected) {
-      try {
-        await connection.end();
-      } catch (error) {
-        console.error('Failed to close Neon client:', error);
-      }
-    }
+    await connection.end({ timeout: 5 });
   }
 }
 
@@ -115,7 +109,7 @@ function safeEqual(left, right) {
 
 function requireDatabaseMode() {
   if (!isDatabaseMode()) {
-    throw new Error('La preview pública es de solo lectura.');
+    throw new Error('Esta instalación no tiene persistencia configurada.');
   }
 }
 
@@ -319,35 +313,24 @@ async function fetchSetupData(client, editor) {
 }
 
 export async function getSetupData() {
-  if (isDatabaseMode()) {
-    return withClient(client => fetchSetupData(client, false));
-  }
-
-  if (!getConfiguredConnectionString()) {
+  if (isPreviewMode()) {
     return {
       items: PREVIEW_EQUIPMENT,
       sections: PREVIEW_SECTIONS,
       profile: PREVIEW_PROFILE,
       events: PREVIEW_EVENTS,
+      mode: 'preview',
     };
   }
 
-  try {
-    return await withClient(client => fetchSetupData(client, false), {
+  if (isDatabaseMode()) {
+    const setup = await withClient(client => fetchSetupData(client, false), {
       readOnly: true,
     });
-  } catch (error) {
-    console.warn(
-      'PostgreSQL read error, returning the bundled preview dataset:',
-      error?.message
-    );
-    return {
-      items: PREVIEW_EQUIPMENT,
-      sections: PREVIEW_SECTIONS,
-      profile: PREVIEW_PROFILE,
-      events: PREVIEW_EVENTS,
-    };
+    return { ...setup, mode: 'database' };
   }
+
+  return { ...EMPTY_SETUP, mode: 'local' };
 }
 
 export async function getEditorSetupData() {

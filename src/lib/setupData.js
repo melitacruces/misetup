@@ -218,8 +218,8 @@ export function buildSetupExport({
   sections,
   items,
   events,
-  preview,
   includePrivate,
+  source = 'preview',
 }) {
   const exportedProfile = normalizeProfile(profile);
   if (!includePrivate && exportedProfile.show_prices === false) {
@@ -242,7 +242,7 @@ export function buildSetupExport({
   return {
     schemaVersion: 2,
     exportedAt: new Date().toISOString(),
-    source: preview ? 'preview' : 'personal',
+    source,
     profile: exportedProfile,
     sections: [...sections].sort((a, b) => a.position - b.position),
     equipment: publicItems.sort((a, b) => {

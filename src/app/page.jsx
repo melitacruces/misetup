@@ -5,16 +5,15 @@ export const dynamic = 'force-dynamic';
 
 export default async function Page() {
   const setup = await getSetupData();
-  const preview = process.env.MISETUP_MODE !== 'database';
 
   return (
     <Dashboard
-      preview={preview}
+      preview={setup.mode === 'preview'}
+      persistent={setup.mode === 'database'}
       initialData={setup.items}
       initialSections={setup.sections}
       initialProfile={setup.profile}
       initialEvents={setup.events}
-      initialEditorMode={false}
     />
   );
 }

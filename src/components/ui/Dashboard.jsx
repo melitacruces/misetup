@@ -72,6 +72,7 @@ export default function Dashboard({
   initialEvents = [],
   initialEditorMode = false,
   preview = false,
+  persistent = false,
 }) {
   const initialPayload = useMemo(
     () =>
@@ -190,7 +191,7 @@ export default function Dashboard({
 
   const handleEditorLogin = async event => {
     event?.preventDefault();
-    if (!preview) {
+    if (persistent) {
       const password = window.prompt('Ingresa la clave de editor de esta instalación.');
       if (!password) return false;
       const session = await runAction(() => startEditorSession(password));
@@ -212,7 +213,7 @@ export default function Dashboard({
 
   const logoutEditor = async () => {
     setEditingItem(null);
-    if (!preview) {
+    if (persistent) {
       await runAction(() => endEditorSession());
       const payload = await runAction(() => getSetupData());
       if (payload) applyPayload(payload);
@@ -271,7 +272,7 @@ export default function Dashboard({
     if (!isEditorMode || !editingItem) return false;
     const draft = normalizeEquipmentItem(draftInput || editingItem.draft);
 
-    if (!preview) {
+    if (persistent) {
       const response = await runAction(() =>
         editingItem.isNew
           ? addEquipment(draft)
@@ -320,14 +321,14 @@ export default function Dashboard({
       markChallenge('equipment');
     }
     setEditingItem(null);
-    setNotice('Cambios guardados en esta preview.');
+    setNotice('Cambios guardados temporalmente.');
     return true;
   };
 
   const handleDeleteItem = async () => {
     if (!isEditorMode || !editingItem) return false;
     const { id, isNew } = editingItem;
-    if (!preview && !isNew) {
+    if (persistent && !isNew) {
       const response = await runAction(() => deleteEquipment(id));
       if (!response?.success) {
         setNotice(response?.error || 'No se pudo eliminar el elemento.');
@@ -343,7 +344,7 @@ export default function Dashboard({
 
   const handleAddSection = async (title, iconName) => {
     if (!isEditorMode) return false;
-    if (!preview) {
+    if (persistent) {
       const response = await runAction(() =>
         addSection({ title, icon_name: iconName })
       );
@@ -376,7 +377,7 @@ export default function Dashboard({
       },
     ]);
     markChallenge('section');
-    setNotice('Sección creada en esta preview.');
+    setNotice('Sección creada temporalmente.');
     return true;
   };
 
@@ -388,7 +389,7 @@ export default function Dashboard({
       return false;
     }
 
-    if (!preview) {
+    if (persistent) {
       const response = await runAction(() => deleteSection(id));
       if (!response?.success) {
         setNotice(response?.error || 'No se pudo eliminar la sección.');
@@ -411,7 +412,7 @@ export default function Dashboard({
       )
       .map((section, index) => ({ ...section, position: index }));
     setSections(reordered);
-    if (!preview) {
+    if (persistent) {
       const response = await runAction(() => reorderSections(orderedIds));
       if (!response?.success) {
         setSections(previousSections);
@@ -425,7 +426,7 @@ export default function Dashboard({
 
   const handleUpdateSection = async (id, title, iconName) => {
     if (!isEditorMode || !title.trim()) return false;
-    if (!preview) {
+    if (persistent) {
       const response = await runAction(() =>
         updateSection(id, { title, icon_name: iconName })
       );
@@ -471,7 +472,7 @@ export default function Dashboard({
     setItems(previous =>
       previous.map(item => reorderedById.get(item.id) || item)
     );
-    if (!preview) {
+    if (persistent) {
       const response = await runAction(() => reorderEquipment(orderedIds));
       if (!response?.success) {
         setItems(previousItems);
@@ -480,14 +481,14 @@ export default function Dashboard({
       }
     }
     markChallenge('reorder');
-    setNotice('Orden actualizado en esta preview.');
+    setNotice('Orden actualizado temporalmente.');
     return true;
   };
 
   const handleSaveProfile = async nextProfile => {
     if (!isEditorMode) return false;
     const normalized = normalizeProfile(nextProfile);
-    if (!preview) {
+    if (persistent) {
       const response = await runAction(() => updateSetupProfile(normalized));
       if (!response?.success) {
         setNotice(response?.error || 'No se pudo guardar la presentación.');
@@ -498,13 +499,13 @@ export default function Dashboard({
       return true;
     }
     setProfile(normalized);
-    setNotice('Presentación actualizada en esta preview.');
+    setNotice('Presentación actualizada temporalmente.');
     return true;
   };
 
   const handleAddEvent = async event => {
     if (!isEditorMode) return false;
-    if (!preview) {
+    if (persistent) {
       const response = await runAction(() => addSetupEvent(event));
       if (!response?.success) {
         setNotice(response?.error || 'No se pudo añadir el evento.');
@@ -524,7 +525,7 @@ export default function Dashboard({
 
   const handleDeleteEvent = async id => {
     if (!isEditorMode) return false;
-    if (!preview) {
+    if (persistent) {
       const response = await runAction(() => deleteSetupEvent(id));
       if (!response?.success) {
         setNotice(response?.error || 'No se pudo eliminar el evento.');
@@ -542,8 +543,8 @@ export default function Dashboard({
       sections,
       items,
       events,
-      preview,
       includePrivate: isEditorMode,
+      source: preview ? 'preview' : 'personal',
     });
     const blob = new Blob([JSON.stringify(payload, null, 2)], {
       type: 'application/json',
@@ -573,13 +574,13 @@ export default function Dashboard({
     setKindFilter('all');
     setSortOrder('position');
 
-    if (preview) {
+    if (!persistent) {
       applyPayload(cloneData(previewSeed.current));
       setActiveView('overview');
       setActiveTab(previewSeed.current.sections[0]?.slug || 'core');
       setIsEditorMode(false);
       setGuideProgress(EMPTY_GUIDE);
-      setNotice('Preview reiniciada.');
+      setNotice(preview ? 'Preview reiniciada.' : 'Datos locales reiniciados.');
       return;
     }
 
@@ -713,6 +714,7 @@ export default function Dashboard({
           handleReset={handleReset}
           isPending={isPending}
           preview={preview}
+          temporary={!persistent}
         />
 
         {activeView === 'overview' && (

@@ -31,6 +31,7 @@ export default function Header({
   handleReset,
   isPending,
   preview,
+  temporary,
 }) {
   const currentCategory = CATEGORIES[activeTab] || {
     icon: <i className="fa-solid fa-folder" />,
@@ -87,7 +88,7 @@ export default function Header({
             <Download className="h-4 w-4 shrink-0" />
             <span>exportar</span>
           </button>
-          {preview && (
+          {temporary && (
             <button
               type="button"
               onClick={handleReset}
